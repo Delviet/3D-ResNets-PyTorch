@@ -20,10 +20,17 @@ from dataset import get_training_set, get_validation_set, get_test_set
 from utils import Logger
 from train import train_epoch
 from validation import val_epoch
+from torchsummary import summary
 import test
 
 if __name__ == '__main__':
     opt = parse_opts()
+    torch.manual_seed(opt.manual_seed)
+
+    model, parameters = generate_model(opt)
+    summary(model, input_size=(3, 16, 112, 112))
+
+    print('Generated')
     if opt.root_path != '':
         opt.video_path = os.path.join(opt.root_path, opt.video_path)
         opt.annotation_path = os.path.join(opt.root_path, opt.annotation_path)

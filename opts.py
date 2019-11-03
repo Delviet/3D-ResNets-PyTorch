@@ -5,39 +5,39 @@ def parse_opts():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--root_path',
-        default='/root/data/ActivityNet',
+        default='',
         type=str,
         help='Root directory path of data')
     parser.add_argument(
         '--video_path',
-        default='video_kinetics_jpg',
+        default='../GTA_dataset',
         type=str,
         help='Directory path of Videos')
     parser.add_argument(
         '--annotation_path',
-        default='kinetics.json',
+        default='../GTA_JPG_DATASET',
         type=str,
         help='Annotation file path')
     parser.add_argument(
         '--result_path',
-        default='results',
+        default='results_ip_csn',
         type=str,
         help='Result directory path')
     parser.add_argument(
         '--dataset',
-        default='kinetics',
+        default='gta',
         type=str,
-        help='Used dataset (activitynet | kinetics | ucf101 | hmdb51)')
+        help='Used dataset (activitynet | kinetics | ucf101 | hmdb51| gta)')
     parser.add_argument(
         '--n_classes',
-        default=400,
+        default=7,
         type=int,
         help=
-        'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51)'
+        'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51, GTA: 7)'
     )
     parser.add_argument(
         '--n_finetune_classes',
-        default=400,
+        default=7,
         type=int,
         help=
         'Number of classes for fine-tuning. n_classes is set to the number when pretraining.'
@@ -116,7 +116,7 @@ def parse_opts():
         help='Patience of LR scheduler. See documentation of ReduceLROnPlateau.'
     )
     parser.add_argument(
-        '--batch_size', default=128, type=int, help='Batch Size')
+        '--batch_size', default=32, type=int, help='Batch Size')
     parser.add_argument(
         '--n_epochs',
         default=200,
@@ -181,7 +181,7 @@ def parse_opts():
     parser.set_defaults(no_softmax_in_test=False)
     parser.add_argument(
         '--no_cuda', action='store_true', help='If true, cuda is not used.')
-    parser.set_defaults(no_cuda=False)
+    parser.set_defaults(no_cuda=True)
     parser.add_argument(
         '--n_threads',
         default=4,
@@ -189,7 +189,7 @@ def parse_opts():
         help='Number of threads for multi-thread loading')
     parser.add_argument(
         '--checkpoint',
-        default=10,
+        default=1,
         type=int,
         help='Trained model is saved at every this epochs.')
     parser.add_argument(
@@ -209,8 +209,15 @@ def parse_opts():
         type=str,
         help='(resnet | preresnet | wideresnet | resnext | densenet | ')
     parser.add_argument(
+        '--model_type',
+        default='ip_csn',
+        type=str,
+        help='(3d | ir_csn | ip_csn)',
+        choices=['3d', 'ir_csn', 'ip_csn']
+    )
+    parser.add_argument(
         '--model_depth',
-        default=18,
+        default=50,
         type=int,
         help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
     parser.add_argument(

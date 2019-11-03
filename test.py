@@ -2,6 +2,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 import time
+from tqdm import tqdm
 import os
 import sys
 import json
@@ -36,7 +37,7 @@ def test(data_loader, model, opt, class_names):
     output_buffer = []
     previous_video_id = ''
     test_results = {'results': {}}
-    for i, (inputs, targets) in enumerate(data_loader):
+    for i, (inputs, targets) in tqdm(enumerate(data_loader), total=len(data_loader)):
         data_time.update(time.time() - end_time)
 
         inputs = Variable(inputs, volatile=True)

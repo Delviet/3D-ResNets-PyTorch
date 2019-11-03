@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import math
 from functools import partial
+from loguru import logger
 
 __all__ = [
     'ResNet', 'resnet10', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
@@ -21,6 +22,10 @@ def conv3x3x3(in_planes, out_planes, stride=1):
         padding=1,
         bias=False)
 
+def conv3d_dw(in_planes, out_planes, stride=1):
+    # 3D depthwise convolution
+    return nn.Conv3d(
+            in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False, groups=in_planes)
 
 def downsample_basic_block(x, planes, stride):
     out = F.avg_pool3d(x, kernel_size=1, stride=stride)
@@ -105,6 +110,92 @@ class Bottleneck(nn.Module):
 
         return out
 
+class IR_bottleneck(nn.Module):
+    '''
+    Interaction reduced bottelneck block
+    '''
+    expansion = 4
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(IR_bottleneck, self).__init__()
+        self.conv1 = nn.Conv3d(inplanes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm3d(planes)
+        self.conv2 = conv3d_dw(planes, planes, stride=stride)
+        self.bn2 = nn.BatchNorm3d(planes)
+        self.conv3 = nn.Conv3d(planes, planes * 4, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm3d(planes * 4)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
+class IP_bottleneck(nn.Module):
+    expansion = 4
+    '''
+    Interaction preserved bottleneck block
+    '''
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(IP_bottleneck, self).__init__()
+        self.conv1 = nn.Conv3d(inplanes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm3d(planes)
+        self.conv2 = nn.Conv3d(planes, planes, kernel_size=1, bias=False)
+        self.bn2 = nn.BatchNorm3d(planes)
+        self.conv3 = conv3d_dw(planes, planes, stride=stride)
+        self.bn3 = nn.BatchNorm3d(planes)
+        self.conv4 = nn.Conv3d(planes, planes * 4, kernel_size=1, bias=False)
+        self.bn4= nn.BatchNorm3d(planes * 4)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+        out = self.relu(out)
+
+        out = self.conv4(out)
+        out = self.bn4(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
 
 class ResNet(nn.Module):
 
@@ -114,7 +205,8 @@ class ResNet(nn.Module):
                  sample_size,
                  sample_duration,
                  shortcut_type='B',
-                 num_classes=400):
+                 num_classes=400,
+                 model_type='3d'):
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv3d(
@@ -232,30 +324,69 @@ def resnet34(**kwargs):
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     return model
 
+def load_resnet_weights(curr_model, pretrain_path):
+    model = resnet50(model_type='3d')
+    ## add cuda handling
+    model = nn.DataParallel(model, device_ids=None)
+    pretrain = torch.load(pretrain_path)
+    model.load_state_dict(pretrain['state_dict'])
+
+
+
+
 
 def resnet50(**kwargs):
     """Constructs a ResNet-50 model.
     """
-    model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    model_type = kwargs.get('model_type', '3d')
+    if model_type == 'ir_csn':
+        model = ResNet(IR_bottleneck, [3, 4, 6, 3], **kwargs)
+
+        # load resnet 50 model
+        # transfer weights
+    elif model_type == 'ip_csn':
+        model = ResNet(IP_bottleneck, [3, 4, 6, 3], **kwargs)
+    else:
+        model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    # print(model.layer1[0].conv2.weight.shape)
     return model
 
 
 def resnet101(**kwargs):
     """Constructs a ResNet-101 model.
     """
-    model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+    model_type = kwargs.get('model_type', '3d')
+    if model_type == 'ir_csn':
+        model = ResNet(IR_bottleneck, [3, 4, 23, 3], **kwargs)
+    elif model_type == 'ip_csn':
+        model = ResNet(IP_bottleneck, [3, 4, 23, 3], **kwargs)
+    else:
+        model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     return model
 
 
 def resnet152(**kwargs):
     """Constructs a ResNet-101 model.
     """
-    model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
+    model_type = kwargs.get('model_type', '3d')
+    if model_type == 'ir_csn':
+        model = ResNet(IR_bottleneck, [3, 8, 36, 3], **kwargs)
+    elif model_type == 'ip_csn':
+        model = ResNet(IP_bottleneck, [3, 8, 36, 3], **kwargs)
+    else:
+        model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     return model
 
 
 def resnet200(**kwargs):
     """Constructs a ResNet-101 model.
     """
-    model = ResNet(Bottleneck, [3, 24, 36, 3], **kwargs)
+    model_type = kwargs.get('model_type', '3d')
+    if model_type == 'ir_csn':
+        model = ResNet(IR_bottleneck, [3, 24, 36, 3], **kwargs)
+    elif model_type == 'ip_csn':
+        model = ResNet(IP_bottleneck, [3, 24, 36, 3], **kwargs)
+    else:
+        model = ResNet(Bottleneck, [3, 24, 36, 3], **kwargs)
     return model
+

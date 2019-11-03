@@ -37,25 +37,29 @@ def generate_model(opt):
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
+                sample_duration=opt.sample_duration,
+                model_type=opt.model_type)
         elif opt.model_depth == 101:
             model = resnet.resnet101(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
+                sample_duration=opt.sample_duration,
+                model_type=opt.model_type)
         elif opt.model_depth == 152:
             model = resnet.resnet152(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
+                sample_duration=opt.sample_duration,
+                model_type=opt.model_type)
         elif opt.model_depth == 200:
             model = resnet.resnet200(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
-                sample_duration=opt.sample_duration)
+                sample_duration=opt.sample_duration,
+                model_type=opt.model_type)
     elif opt.model == 'wideresnet':
         assert opt.model_depth in [50]
 
