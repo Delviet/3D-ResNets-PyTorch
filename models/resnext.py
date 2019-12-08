@@ -89,7 +89,8 @@ class ResNeXt(nn.Module):
                  sample_duration,
                  shortcut_type='B',
                  cardinality=32,
-                 num_classes=400):
+                 num_classes=400,
+                 cuda_id=1):
         self.inplanes = 64
         super(ResNeXt, self).__init__()
         self.conv1 = nn.Conv3d(
@@ -187,9 +188,11 @@ def get_fine_tuning_parameters(model, ft_begin_index):
     for k, v in model.named_parameters():
         for ft_module in ft_module_names:
             if ft_module in k:
+
                 parameters.append({'params': v})
                 break
         else:
+            v.requires_grad = False
             parameters.append({'params': v, 'lr': 0.0})
 
     return parameters

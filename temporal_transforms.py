@@ -1,6 +1,6 @@
 import random
 import math
-
+import numpy as np
 
 class LoopPadding(object):
 
@@ -98,11 +98,16 @@ class TemporalRandomCrop(object):
             list: Cropped frame indices.
         """
 
-        rand_end = max(0, len(frame_indices) - self.size - 1)
-        begin_index = random.randint(0, rand_end)
-        end_index = min(begin_index + self.size, len(frame_indices))
+        # rand_end = max(0, len(frame_indices) - self.size - 1)
+        # begin_index = random.randint(0, rand_end)
+        # end_index = min(begin_index + self.size, len(frame_indices))
+        # out = frame_indices[begin_index:end_index]
+        # New method: randomly sample
+        random_dxs = list(sorted(np.random.choice([i for i in range(len(frame_indices))], self.size)))
+        out = []
+        for idx in random_dxs:
+            out.append(frame_indices[idx])
 
-        out = frame_indices[begin_index:end_index]
 
         for index in out:
             if len(out) >= self.size:

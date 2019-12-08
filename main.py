@@ -1,15 +1,17 @@
 import os
+from comet_ml import Experiment, ExistingExperiment
 import sys
 import json
 import numpy as np
 import torch
 from torch import nn
 from torch import optim
+from torchsummary import summary
 from torch.optim import lr_scheduler
 
 from opts import parse_opts
 from model import generate_model
-from mean import get_mean, get_std
+from mean import get_mean, get_std, online_mean_and_sd
 from spatial_transforms import (
     Compose, Normalize, Scale, CenterCrop, CornerCrop, MultiScaleCornerCrop,
     MultiScaleRandomCrop, RandomHorizontalFlip, ToTensor)
@@ -22,13 +24,49 @@ from train import train_epoch
 from validation import val_epoch
 from torchsummary import summary
 import test
-
+import subprocess
+import torch
 if __name__ == '__main__':
     opt = parse_opts()
+    print(opt.cuda_id)
+    print( torch.cuda.device_count() )
+    # os.environ['CUDA_VISIBLE_DEVICES'] = f'{opt.cuda_id}'
+    # os.environ['CUDA_VISIBLE_DEVICE'] = f'{opt.cuda_id}'
+    print(torch.cuda.is_available())
+    print(torch.cuda.current_device())
+
+    # torch.device = torch.cud
+    # rc = subprocess.check_output(["echo $CUDA_VISIBLE_DEVICE"])
+    # print(rc)
     torch.manual_seed(opt.manual_seed)
 
     model, parameters = generate_model(opt)
-    summary(model, input_size=(3, 16, 112, 112))
+
+    experiment = Experiment(api_key='Cbyqfs9Z8auN5ivKsbv2Z6Ogi', project_name='GTA-Crime')
+    params = {'lr': opt.learning_rate,
+              'dampening': opt.dampening,
+              'optimizer': opt.optimizer,
+              'lr_patience': opt.lr_patience,
+              'batch_size': opt.batch_size,
+              'n_epochs': opt.n_epochs,
+              'begin_epoch': opt.begin_epoch,
+              'resume_path': opt.resume_path,
+              'pretrain_path': opt.pretrain_path,
+              'ft_index': opt.ft_begin_index,
+              'no_cuda': opt.no_cuda,
+              'cuda_id': opt.cuda_id,
+              'model': opt.model,
+              'model_type': opt.model_type,
+              'model_depth': opt.model_depth,
+              'resnet_shortcut': opt.resnet_shortcut}
+    experiment.log_parameters(params)
+    experiment.add_tag('augmentation')
+    experiment.add_tag('multilayer fc module')
+    experiment.add_tag('densenext')
+    experiment.add_tag(opt.model_type)
+
+
+
 
     print('Generated')
     if opt.root_path != '':
@@ -44,7 +82,7 @@ if __name__ == '__main__':
         opt.scales.append(opt.scales[-1] * opt.scale_step)
     opt.arch = '{}-{}'.format(opt.model, opt.model_depth)
     opt.mean = get_mean(opt.norm_value, dataset=opt.mean_dataset)
-    opt.std = get_std(opt.norm_value)
+    opt.std = get_std(opt.norm_value, opt.dataset)
     print(opt)
     with open(os.path.join(opt.result_path, 'opts.json'), 'w') as opt_file:
         json.dump(vars(opt), opt_file)
@@ -53,9 +91,11 @@ if __name__ == '__main__':
 
     model, parameters = generate_model(opt)
     print(model)
+    summary(model, input_size=(3,64, 112, 112))
     criterion = nn.CrossEntropyLoss()
     if not opt.no_cuda:
-        criterion = criterion.cuda()
+        criterion = criterion.cuda(device=opt.cuda_id)
+        torch.cuda.device(opt.cuda_id)
 
     if opt.no_mean_norm and not opt.std_norm:
         norm_method = Normalize([0, 0, 0], [1, 1, 1])
@@ -88,6 +128,7 @@ if __name__ == '__main__':
             shuffle=True,
             num_workers=opt.n_threads,
             pin_memory=True)
+
         train_logger = Logger(
             os.path.join(opt.result_path, 'train.log'),
             ['epoch', 'loss', 'acc', 'lr'])
@@ -99,13 +140,19 @@ if __name__ == '__main__':
             dampening = 0
         else:
             dampening = opt.dampening
-        optimizer = optim.SGD(
-            parameters,
-            lr=opt.learning_rate,
-            momentum=opt.momentum,
-            dampening=dampening,
-            weight_decay=opt.weight_decay,
-            nesterov=opt.nesterov)
+        if opt.optimizer == 'sgd':
+            optimizer = optim.SGD(
+                parameters,
+                lr=opt.learning_rate,
+                momentum=opt.momentum,
+                dampening=dampening,
+                weight_decay=opt.weight_decay,
+                nesterov=opt.nesterov)
+        else:
+            optimizer = optim.Adam(
+                parameters,
+                lr=opt.learning_rate,
+                weight_decay=opt.weight_decay)
         scheduler = lr_scheduler.ReduceLROnPlateau(
             optimizer, 'min', patience=opt.lr_patience)
     if not opt.no_val:
@@ -120,8 +167,8 @@ if __name__ == '__main__':
             opt, spatial_transform, temporal_transform, target_transform)
         val_loader = torch.utils.data.DataLoader(
             validation_data,
-            batch_size=opt.batch_size,
-            shuffle=False,
+            batch_size=32,
+            shuffle=True,
             num_workers=opt.n_threads,
             pin_memory=True)
         val_logger = Logger(
@@ -138,13 +185,14 @@ if __name__ == '__main__':
             optimizer.load_state_dict(checkpoint['optimizer'])
 
     print('run')
+    val_freq = 10
     for i in range(opt.begin_epoch, opt.n_epochs + 1):
         if not opt.no_train:
             train_epoch(i, train_loader, model, criterion, optimizer, opt,
-                        train_logger, train_batch_logger)
+                        train_logger, train_batch_logger, experiment=experiment)
         if not opt.no_val:
             validation_loss = val_epoch(i, val_loader, model, criterion, opt,
-                                        val_logger)
+                                    val_logger, experiment=experiment)
 
         if not opt.no_train and not opt.no_val:
             scheduler.step(validation_loss)

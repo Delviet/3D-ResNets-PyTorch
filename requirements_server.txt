@@ -1,0 +1,7 @@
+torch
+torchvision
+loguru
+Pillow
+tqdm
+sklearn
+torchsummary

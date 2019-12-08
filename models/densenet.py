@@ -64,7 +64,7 @@ def get_fine_tuning_parameters(model, ft_begin_index):
                 break
         else:
             parameters.append({'params': v, 'lr': 0.0})
-
+    # print(len(parameters), 'len of fine tuned parameters')
     return parameters
 
 

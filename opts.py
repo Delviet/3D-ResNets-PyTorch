@@ -20,7 +20,7 @@ def parse_opts():
         help='Annotation file path')
     parser.add_argument(
         '--result_path',
-        default='results_ip_csn',
+        default='resnext-101',
         type=str,
         help='Result directory path')
     parser.add_argument(
@@ -30,7 +30,7 @@ def parse_opts():
         help='Used dataset (activitynet | kinetics | ucf101 | hmdb51| gta)')
     parser.add_argument(
         '--n_classes',
-        default=7,
+        default=51,
         type=int,
         help=
         'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51, GTA: 7)'
@@ -49,7 +49,7 @@ def parse_opts():
         help='Height and width of inputs')
     parser.add_argument(
         '--sample_duration',
-        default=16,
+        default=64,
         type=int,
         help='Temporal duration of inputs')
     parser.add_argument(
@@ -59,7 +59,7 @@ def parse_opts():
         help='Initial scale for multiscale cropping')
     parser.add_argument(
         '--n_scales',
-        default=5,
+        default=2,
         type=int,
         help='Number of scales for multiscale cropping')
     parser.add_argument(
@@ -69,25 +69,25 @@ def parse_opts():
         help='Scale step for multiscale cropping')
     parser.add_argument(
         '--train_crop',
-        default='corner',
+        default='center',
         type=str,
         help=
         'Spatial cropping method in training. random is uniform. corner is selection from 4 corners and 1 center.  (random | corner | center)'
     )
     parser.add_argument(
         '--learning_rate',
-        default=0.1,
+        default=0.001,
         type=float,
         help=
         'Initial learning rate (divided by 10 while training by lr scheduler)')
-    parser.add_argument('--momentum', default=0.9, type=float, help='Momentum')
+    parser.add_argument('--momentum', default=0, type=float, help='Momentum') # 0.9
     parser.add_argument(
-        '--dampening', default=0.9, type=float, help='dampening of SGD')
+        '--dampening', default=0, type=float, help='dampening of SGD') # 0.9
     parser.add_argument(
-        '--weight_decay', default=1e-3, type=float, help='Weight Decay')
+        '--weight_decay', default=0, type=float, help='Weight Decay') # 1e-3
     parser.add_argument(
         '--mean_dataset',
-        default='activitynet',
+        default='gta',
         type=str,
         help=
         'dataset for mean values of mean subtraction (activitynet | kinetics)')
@@ -95,7 +95,7 @@ def parse_opts():
         '--no_mean_norm',
         action='store_true',
         help='If true, inputs are not normalized by mean.')
-    parser.set_defaults(no_mean_norm=False)
+    parser.set_defaults(no_mean_norm=True)
     parser.add_argument(
         '--std_norm',
         action='store_true',
@@ -136,14 +136,14 @@ def parse_opts():
         help='Number of validation samples for each activity')
     parser.add_argument(
         '--resume_path',
-        default='',
+        default='resnext-101/save_38.pth',
         type=str,
         help='Save data (.pth) of previous training')
     parser.add_argument(
-        '--pretrain_path', default='', type=str, help='Pretrained model (.pth)')
+        '--pretrain_path', default='pretrained_models/resnext-101-64f-kinetics-hmdb51_split1.pth', type=str, help='Pretrained model (.pth)')
     parser.add_argument(
         '--ft_begin_index',
-        default=0,
+        default=20,
         type=int,
         help='Begin block index of fine-tuning')
     parser.add_argument(
@@ -180,8 +180,11 @@ def parse_opts():
         help='If true, output for each clip is not normalized using softmax.')
     parser.set_defaults(no_softmax_in_test=False)
     parser.add_argument(
-        '--no_cuda', action='store_true', help='If true, cuda is not used.')
-    parser.set_defaults(no_cuda=True)
+        '--no_cuda', action='store_false', help='If true, cuda is not used.', default=False)
+    parser.add_argument(
+        '--cuda_id', default=0, help='0 or 1 or other number for cuda device'
+    )
+    parser.set_defaults(no_cuda=False)
     parser.add_argument(
         '--n_threads',
         default=4,
@@ -189,7 +192,7 @@ def parse_opts():
         help='Number of threads for multi-thread loading')
     parser.add_argument(
         '--checkpoint',
-        default=1,
+        default=2,
         type=int,
         help='Trained model is saved at every this epochs.')
     parser.add_argument(
@@ -205,19 +208,19 @@ def parse_opts():
         'If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
     parser.add_argument(
         '--model',
-        default='resnet',
+        default='resnext',
         type=str,
         help='(resnet | preresnet | wideresnet | resnext | densenet | ')
     parser.add_argument(
         '--model_type',
-        default='ip_csn',
+        default='3d',
         type=str,
         help='(3d | ir_csn | ip_csn)',
         choices=['3d', 'ir_csn', 'ip_csn']
     )
     parser.add_argument(
         '--model_depth',
-        default=50,
+        default=101,
         type=int,
         help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
     parser.add_argument(
@@ -234,6 +237,7 @@ def parse_opts():
         help='ResNeXt cardinality')
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
+
 
     args = parser.parse_args()
 

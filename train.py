@@ -9,7 +9,7 @@ from utils import AverageMeter, calculate_accuracy
 
 
 def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
-                epoch_logger, batch_logger):
+                epoch_logger, batch_logger, experiment=None):
     print('train at epoch {}'.format(epoch))
 
     model.train()
@@ -20,11 +20,12 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
     accuracies = AverageMeter()
 
     end_time = time.time()
+
     for i, (inputs, targets) in tqdm(enumerate(data_loader), total=len(data_loader)):
         data_time.update(time.time() - end_time)
 
         if not opt.no_cuda:
-            targets = targets.cuda(async=True)
+            targets = targets.cuda(device=opt.cuda_id, non_blocking=True)
         inputs = Variable(inputs)
         targets = Variable(targets)
         outputs = model(inputs)
@@ -49,6 +50,9 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             'acc': accuracies.val,
             'lr': optimizer.param_groups[0]['lr']
         })
+        if experiment:
+            experiment.log_metric('TRAIN Loss batch', losses.val.cpu())
+            experiment.log_metric('TRAIN Acc batch', accuracies.val.cpu())
 
         print('Epoch: [{0}][{1}/{2}]\t'
               'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
@@ -69,6 +73,10 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         'acc': accuracies.avg,
         'lr': optimizer.param_groups[0]['lr']
     })
+    if experiment:
+        experiment.log_metric('TRAIN Loss epoch', losses.avg.cpu())
+        experiment.log_metric('TRAIN Acc epoch', accuracies.avg.cpu())
+        experiment.log_metric('TRAIN LR', optimizer.param_groups[0]['lr'])
 
     if epoch % opt.checkpoint == 0:
         save_file_path = os.path.join(opt.result_path,

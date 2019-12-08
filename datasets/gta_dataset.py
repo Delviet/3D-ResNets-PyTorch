@@ -6,6 +6,7 @@ import sys
 import subprocess
 import  numpy as np
 from tqdm import tqdm
+from vidaug import augmentors as va
 import math
 import copy
 from sklearn.model_selection import train_test_split
@@ -119,7 +120,7 @@ def dataset_to_json(dataset_path, split_type=1):
     dataset_folders = [name for name in inner_files if os.path.isdir(name) and os.path.split(name)[
         -1].istitle()]  # filter out files and non Title names
     classes = [os.path.split(folder)[-1] for folder in dataset_folders]
-    class_map = dict(zip(classes, range(1, len(classes) + 1)))
+    class_map = dict(zip(classes, range(0, len(classes))))
     scene_id = 1
     for class_folder in dataset_folders:
         curr_class = os.path.split(class_folder)[-1]
@@ -181,6 +182,7 @@ def make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video=1, sam
         logger.warning(f'Empty {subset} split. Check your json file.')
         return {}, {}, {}, {}
 
+    class_counter = Counter([])
     for video, (class_id, scene_id) in tqdm(video_labels.items(), total=len(video_labels.items())):
         sample = {}
         n_frames = 0
@@ -207,28 +209,38 @@ def make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video=1, sam
             'scene': scene_id,
             'frame_indices': frame_indices,
         }
+        class_counter.update([class_id for i in range(n_samples_for_each_video)])
         if n_samples_for_each_video == 1:
             sample['frame_indices'] = list(range(1, n_frames + 1))
             dataset.append(sample)
+
         else:
-            if n_samples_for_each_video > 1:
-                step = max(1,
-                           math.ceil((n_frames - 1 - sample_duration) /
-                                     (n_samples_for_each_video - 1)))
-            else:
-                step = sample_duration
-            for j in range(1, n_frames, step):
-                sample_j = copy.deepcopy(sample)
-                sample_j['frame_indices'] = list(
-                    range(j, min(n_frames + 1, j + sample_duration)))
-                dataset.append(sample_j)
+            for k in range(n_samples_for_each_video):
+                sample_k = copy.deepcopy(sample)
+                sample_k['frame_indices'] = list(range(1, n_frames + 1))
+                dataset.append(sample_k)
+            # if n_samples_for_each_video > 1:
+            #     step = max(1,
+            #                math.ceil((n_frames - 1 - sample_duration) /
+            #                          (n_samples_for_each_video - 1)))
+            # else:
+            #     step = sample_duration
+            # for j in range(1, n_frames, step):
+            #     sample_j = copy.deepcopy(sample)
+            #     sample_j['frame_indices'] = list(
+            #         range(j, min(n_frames + 1, j + sample_duration)))
+            #     dataset.append(sample_j)
     logger.info(f'Loaded {subset} dataset')
+    logger.info(f'Dataset size: {len(dataset)}')
+    print(class_counter)
     # print(np.array(list(video_labels.values())))
     video_counter = Counter(np.array(list(video_labels.values()))[:, 0])
     print('DATASET REVIEW')
+    print(class_map)
     reverse_class_map = dict(zip(class_map.values(), class_map.keys()))
     for label, c in video_counter.items():
         print(f'{reverse_class_map[label]}: {c}/{len(video_labels)}')
+
     return dataset, scene_labels, scene_map, class_map
 
 
@@ -237,16 +249,35 @@ class GTA_crime(data.Dataset):
                  dataset_path,
                  jpg_path,
                  subset,
-                 n_samples_for_each_video=5,
+                 n_samples_for_each_video=10,
                  spatial_transform=None,
                  temporal_transform=None,
                  target_transform=None,
                  sample_duration=16,
                  get_loader=get_default_video_loader):
+        print('n samples:', n_samples_for_each_video)
+        self.sample_duration = sample_duration
+        self.subset = subset
         self.data, self.scene_labels, self.scene_map, self.class_map = make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video, sample_duration)
         self.spatial_transform = spatial_transform
         self.temporal_transform = temporal_transform
         self.target_transform = target_transform
+        sometimes = lambda aug: va.Sometimes(0.3, aug)  # Used to apply augmentor with 50% probability
+        print(subset)
+        if self.subset == 'train':
+            self.seq = va.Sequential([
+                va.RandomRotate(degrees=10),  # randomly rotates the video with a degree randomly choosen from [-10, 10]
+                sometimes(va.HorizontalFlip()),  # horizontally flip the video with 50% probability
+                sometimes(va.Pepper()),
+                sometimes(va.Salt()),
+                sometimes(va.RandomTranslate()),
+                # sometimes(va.RandomShear()),
+                sometimes(va.GaussianBlur(sigma=1)),
+                sometimes(va.ElasticTransformation()),
+                va.TemporalFit(sample_duration)
+            ])
+        else:
+            self.seq = va.Sequential([va.TemporalFit(sample_duration)])
         self.loader = get_loader()
 
     def __getitem__(self, index):
@@ -263,9 +294,12 @@ class GTA_crime(data.Dataset):
         if self.temporal_transform is not None:
             frame_indices = self.temporal_transform(frame_indices)
         clip = self.loader(path, frame_indices)
+
+        clip = self.seq(clip)
         if self.spatial_transform is not None:
             self.spatial_transform.randomize_parameters()
             clip = [self.spatial_transform(img) for img in clip]
+
         if len(clip)==0:
             logger.warning(f'Empty clip list: {path}, {frame_indices}')
         clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
@@ -273,7 +307,6 @@ class GTA_crime(data.Dataset):
         target = self.data[index]
         if self.target_transform is not None:
             target = self.target_transform(target)
-
         return clip, target
 
     def __len__(self):

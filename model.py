@@ -166,26 +166,44 @@ def generate_model(opt):
                 sample_duration=opt.sample_duration)
 
     if not opt.no_cuda:
-        model = model.cuda()
-        model = nn.DataParallel(model, device_ids=None)
+        import os
+        # os.environ['CUDA_VISIBLE_DEVICES'] = f'{opt.cuda_id}'
+        model = model.cuda(device=opt.cuda_id)
+        model = nn.DataParallel(model, device_ids=[0, 1])
 
         if opt.pretrain_path:
             print('loading pretrained model {}'.format(opt.pretrain_path))
             pretrain = torch.load(opt.pretrain_path)
-            assert opt.arch == pretrain['arch']
+            print(pretrain['arch'])
+            arch = f'{opt.model}-{opt.model_depth}'
+            # arch = opt.model + '-' + opt.model_depth
+            print(arch)
+            assert arch == pretrain['arch']
 
             model.load_state_dict(pretrain['state_dict'])
 
             if opt.model == 'densenet':
                 model.module.classifier = nn.Linear(
                     model.module.classifier.in_features, opt.n_finetune_classes)
-                model.module.classifier = model.module.classifier.cuda()
+                model.module.classifier = model.module.classifier.cuda(device=opt.cuda_id)
             else:
-                model.module.fc = nn.Linear(model.module.fc.in_features,
-                                            opt.n_finetune_classes)
-                model.module.fc = model.module.fc.cuda()
+                model.module.fc = nn.Sequential(nn.Dropout(0.4),
+                                                nn.Linear(model.module.fc.in_features,
+                                                           512),
+
+                                                nn.ReLU6(),
+                                                nn.Dropout(0.4),
+                                                nn.Linear(512,
+                                                          128),
+                                                nn.ReLU6(),
+                                                nn.Linear(128, opt.n_finetune_classes))
+                # model.module.fc = nn.Linear(model.module.fc.in_features,
+                #                             opt.n_finetune_classes)
+
+                model.module.fc = model.module.fc.cuda(device=opt.cuda_id)
 
             parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
+            # print(len(list(parameters)), 'params to fine tune')
             return model, parameters
     else:
         if opt.pretrain_path:
@@ -200,9 +218,12 @@ def generate_model(opt):
                     model.classifier.in_features, opt.n_finetune_classes)
             else:
                 model.fc = nn.Linear(model.fc.in_features,
-                                            opt.n_finetune_classes)
+                                     opt.n_finetune_classes)
 
             parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
+
             return model, parameters
 
     return model, model.parameters()
+
+
