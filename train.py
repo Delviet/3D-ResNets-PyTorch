@@ -4,7 +4,7 @@ import time
 import os
 from tqdm import tqdm
 import sys
-
+from quadriplet_loss import batch_hard_quadriplet_loss
 from utils import AverageMeter, calculate_accuracy
 
 
@@ -21,15 +21,24 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
 
     end_time = time.time()
 
-    for i, (inputs, targets) in tqdm(enumerate(data_loader), total=len(data_loader)):
+    for i, (inputs, targets, scene_targets) in tqdm(enumerate(data_loader), total=len(data_loader)):
         data_time.update(time.time() - end_time)
 
         if not opt.no_cuda:
             targets = targets.cuda(device=opt.cuda_id, non_blocking=True)
         inputs = Variable(inputs)
         targets = Variable(targets)
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+
+
+        if opt.use_quadriplet:
+            embs, outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            batch_hard_loss = 0.5 * batch_hard_quadriplet_loss(targets, scene_targets, embs)
+            loss += batch_hard_loss
+        else:
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+
         acc = calculate_accuracy(outputs, targets)
 
         losses.update(loss.data, inputs.size(0))

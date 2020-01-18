@@ -130,20 +130,26 @@ def parse_opts():
         'Training begins at this epoch. Previous trained model indicated by resume_path is loaded.'
     )
     parser.add_argument(
+        '--use_quadriplet',
+        default=False,
+        type=bool,
+        help='if use quadriplet loss'
+    )
+    parser.add_argument(
         '--n_val_samples',
         default=3,
         type=int,
         help='Number of validation samples for each activity')
     parser.add_argument(
         '--resume_path',
-        default='resnext-101/save_38.pth',
+        default='',
         type=str,
         help='Save data (.pth) of previous training')
     parser.add_argument(
         '--pretrain_path', default='pretrained_models/resnext-101-64f-kinetics-hmdb51_split1.pth', type=str, help='Pretrained model (.pth)')
     parser.add_argument(
         '--ft_begin_index',
-        default=20,
+        default=4,
         type=int,
         help='Begin block index of fine-tuning')
     parser.add_argument(

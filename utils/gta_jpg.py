@@ -2,6 +2,8 @@ import os
 from glob import glob
 import subprocess
 
+# recalc_classes = ['Assault', 'Fight']
+
 def dataset_jpg(dataset_path, jpg_path):
     '''
     converts all files to jpg format
@@ -12,6 +14,8 @@ def dataset_jpg(dataset_path, jpg_path):
     dataset_folders = [name for name in inner_files if os.path.isdir(name) and os.path.split(name)[-1].istitle()] # filter out files and non Title names
     for class_folder in dataset_folders:
         curr_class = os.path.split(class_folder)[-1]
+        # if curr_class not in recalc_classes:
+        #     continue
         os.mkdir(os.path.join(jpg_path, curr_class))
         print(os.path.join(jpg_path, curr_class), 'created')
         scene_folders = glob(os.path.join(class_folder, '*'))

@@ -19,7 +19,7 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, experiment=None
 
         end_time = time.time()
         print(len(data_loader))
-        for i, (inputs, targets) in enumerate(data_loader):
+        for i, (inputs, targets, scene_targets) in enumerate(data_loader):
             print(i)
             data_time.update(time.time() - end_time)
 

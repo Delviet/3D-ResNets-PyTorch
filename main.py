@@ -10,7 +10,7 @@ from torchsummary import summary
 from torch.optim import lr_scheduler
 
 from opts import parse_opts
-from model import generate_model
+from model import generate_model, EmbeddingModel
 from mean import get_mean, get_std, online_mean_and_sd
 from spatial_transforms import (
     Compose, Normalize, Scale, CenterCrop, CornerCrop, MultiScaleCornerCrop,

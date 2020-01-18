@@ -45,7 +45,7 @@ def densenet264(**kwargs):
     return model
 
 
-def get_fine_tuning_parameters(model, ft_begin_index):
+def  get_fine_tuning_parameters(model, ft_begin_index):
     if ft_begin_index == 0:
         return model.parameters()
 
@@ -64,7 +64,7 @@ def get_fine_tuning_parameters(model, ft_begin_index):
                 break
         else:
             parameters.append({'params': v, 'lr': 0.0})
-    # print(len(parameters), 'len of fine tuned parameters')
+    print(len(parameters), 'len of fine tuned parameters')
     return parameters
 
 

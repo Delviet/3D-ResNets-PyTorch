@@ -186,6 +186,8 @@ def generate_model(opt):
                 model.module.classifier = nn.Linear(
                     model.module.classifier.in_features, opt.n_finetune_classes)
                 model.module.classifier = model.module.classifier.cuda(device=opt.cuda_id)
+            # elif opt.use_quadriplet:
+            #     model = EmbeddingModel(model, opt.n_finetune_classes, not opt.no_cuda, opt.cuda_id)
             else:
                 model.module.fc = nn.Sequential(nn.Dropout(0.4),
                                                 nn.Linear(model.module.fc.in_features,
@@ -196,14 +198,14 @@ def generate_model(opt):
                                                 nn.Linear(512,
                                                           128),
                                                 nn.ReLU6(),
-                                                nn.Linear(128, opt.n_finetune_classes))
+                                                nn.Linear(128, opt.n_finetune_classes)).cuda(device=opt.cuda_id)
                 # model.module.fc = nn.Linear(model.module.fc.in_features,
                 #                             opt.n_finetune_classes)
 
-                model.module.fc = model.module.fc.cuda(device=opt.cuda_id)
+                # model.module.fc = model.module.fc.cuda(device=opt.cuda_id)
 
             parameters = get_fine_tuning_parameters(model, opt.ft_begin_index)
-            # print(len(list(parameters)), 'params to fine tune')
+            print(len(list(parameters)), 'params to fine tune')
             return model, parameters
     else:
         if opt.pretrain_path:
@@ -225,5 +227,36 @@ def generate_model(opt):
             return model, parameters
 
     return model, model.parameters()
+
+class EmbeddingModel(nn.Module):
+    def __init__(self, model, n_finetune_classes, cuda=True, cuda_id=0):
+        super(EmbeddingModel, self).__init__()
+        print(model)
+        model.module.fc = nn.Linear(model.module.fc.in_features,
+                                                           512)
+        self.model = model
+        self.classifier = nn.Sequential(nn.Dropout(0.4),
+                                                nn.Linear(512,
+                                                           512),
+
+                                                nn.ReLU6(),
+                                                nn.Dropout(0.4),
+                                                nn.Linear(512,
+                                                          128),
+                                                nn.ReLU6(),
+                                                nn.Linear(128, n_finetune_classes))
+        if cuda:
+            print('CUDA')
+            self.classifier = self.classifier.cuda(device=cuda_id)
+            self.model  = self.model.cuda(device=cuda_id)
+
+
+    def forward(self, x):
+        embedding = self.model(x)
+        print(embedding.shape)
+        y = self.classifier(embedding)
+
+        return embedding, y
+
 
 

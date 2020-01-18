@@ -307,7 +307,8 @@ class GTA_crime(data.Dataset):
         target = self.data[index]
         if self.target_transform is not None:
             target = self.target_transform(target)
-        return clip, target
+        scene_label = sample['scene']
+        return clip, target, scene_label
 
     def __len__(self):
         return len(self.data)

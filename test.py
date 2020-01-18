@@ -37,11 +37,15 @@ def test(data_loader, model, opt, class_names):
     output_buffer = []
     previous_video_id = ''
     test_results = {'results': {}}
-    for i, (inputs, targets) in tqdm(enumerate(data_loader), total=len(data_loader)):
+    for i, (inputs, targets, scene_targets) in tqdm(enumerate(data_loader), total=len(data_loader)):
         data_time.update(time.time() - end_time)
 
         inputs = Variable(inputs, volatile=True)
-        outputs = model(inputs)
+        if opt.use_quadriplet:
+            embs, outputs = model(inputs)
+        else:
+            outputs = model(inputs)
+
         if not opt.no_softmax_in_test:
             outputs = F.softmax(outputs)
 
