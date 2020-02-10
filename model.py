@@ -169,7 +169,7 @@ def generate_model(opt):
         import os
         # os.environ['CUDA_VISIBLE_DEVICES'] = f'{opt.cuda_id}'
         model = model.cuda(device=opt.cuda_id)
-        model = nn.DataParallel(model, device_ids=[0, 1])
+        model = nn.DataParallel(model, device_ids=[0]) # CUDA change
 
         if opt.pretrain_path:
             print('loading pretrained model {}'.format(opt.pretrain_path))
@@ -235,7 +235,7 @@ class EmbeddingModel(nn.Module):
         model.module.fc = nn.Linear(model.module.fc.in_features,
                                                            512)
         self.model = model
-        self.classifier = nn.Sequential(nn.Dropout(0.4),
+        self.classifier = nn.Sequential(nn.Dropout(0.2),
                                                 nn.Linear(512,
                                                            512),
 

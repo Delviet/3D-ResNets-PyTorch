@@ -291,6 +291,8 @@ class GTA_crime(data.Dataset):
         path = sample['video']
         # print(path)
         frame_indices = sample['frame_indices']
+        if len(frame_indices)==0:
+            logger.error(f'empty frame {path}')
         if self.temporal_transform is not None:
             frame_indices = self.temporal_transform(frame_indices)
         clip = self.loader(path, frame_indices)

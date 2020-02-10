@@ -58,3 +58,13 @@ def calculate_accuracy(outputs, targets):
     n_correct_elems = correct.float()[0].sum().data
 
     return n_correct_elems / batch_size
+
+def calculate_accuracy_top_2(outputs, targets):
+    batch_size = targets.size(0)
+
+    _, pred = outputs.topk(2, 1, True)
+    pred = pred.t()
+    correct = pred.eq(targets.view(1, -1).expand_as(pred))
+    correct_2 = correct[:2].view(-1).float().sum(0)
+    return correct_2.mul_(100.0/batch_size)
+    # n_correct_elems = correct.float()[0].sum().data

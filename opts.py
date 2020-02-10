@@ -20,7 +20,7 @@ def parse_opts():
         help='Annotation file path')
     parser.add_argument(
         '--result_path',
-        default='resnext-101',
+        default='resnext-101_less_params',
         type=str,
         help='Result directory path')
     parser.add_argument(
@@ -37,7 +37,7 @@ def parse_opts():
     )
     parser.add_argument(
         '--n_finetune_classes',
-        default=7,
+        default=8,
         type=int,
         help=
         'Number of classes for fine-tuning. n_classes is set to the number when pretraining.'
@@ -82,9 +82,9 @@ def parse_opts():
         'Initial learning rate (divided by 10 while training by lr scheduler)')
     parser.add_argument('--momentum', default=0, type=float, help='Momentum') # 0.9
     parser.add_argument(
-        '--dampening', default=0, type=float, help='dampening of SGD') # 0.9
+        '--dampening', default=0.9, type=float, help='dampening of SGD') # 0.9
     parser.add_argument(
-        '--weight_decay', default=0, type=float, help='Weight Decay') # 1e-3
+        '--weight_decay', default=0.0001, type=float, help='Weight Decay') # 1e-3
     parser.add_argument(
         '--mean_dataset',
         default='gta',
@@ -116,7 +116,7 @@ def parse_opts():
         help='Patience of LR scheduler. See documentation of ReduceLROnPlateau.'
     )
     parser.add_argument(
-        '--batch_size', default=32, type=int, help='Batch Size')
+        '--batch_size', default=80, type=int, help='Batch Size')
     parser.add_argument(
         '--n_epochs',
         default=200,
@@ -142,14 +142,14 @@ def parse_opts():
         help='Number of validation samples for each activity')
     parser.add_argument(
         '--resume_path',
-        default='',
+        default='resnext-101_less_params/save_4.pth',
         type=str,
         help='Save data (.pth) of previous training')
     parser.add_argument(
         '--pretrain_path', default='pretrained_models/resnext-101-64f-kinetics-hmdb51_split1.pth', type=str, help='Pretrained model (.pth)')
     parser.add_argument(
         '--ft_begin_index',
-        default=4,
+        default=5,
         type=int,
         help='Begin block index of fine-tuning')
     parser.add_argument(

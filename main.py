@@ -28,7 +28,7 @@ import subprocess
 import torch
 if __name__ == '__main__':
     opt = parse_opts()
-    print(opt.cuda_id)
+    print('CUDA', opt.cuda_id)
     print( torch.cuda.device_count() )
     # os.environ['CUDA_VISIBLE_DEVICES'] = f'{opt.cuda_id}'
     # os.environ['CUDA_VISIBLE_DEVICE'] = f'{opt.cuda_id}'
@@ -58,7 +58,8 @@ if __name__ == '__main__':
               'model': opt.model,
               'model_type': opt.model_type,
               'model_depth': opt.model_depth,
-              'resnet_shortcut': opt.resnet_shortcut}
+              'resnet_shortcut': opt.resnet_shortcut,
+              'Dropout_rate': '0.2, 0.4'}
     experiment.log_parameters(params)
     experiment.add_tag('augmentation')
     experiment.add_tag('multilayer fc module')
