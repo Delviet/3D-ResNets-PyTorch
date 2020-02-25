@@ -214,7 +214,7 @@ def parse_opts():
         'If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
     parser.add_argument(
         '--model',
-        default='wideresnet',
+        default='densenet',
         type=str,
         help='(resnet | preresnet | wideresnet | resnext | densenet')
     parser.add_argument(
@@ -226,7 +226,7 @@ def parse_opts():
     )
     parser.add_argument(
         '--model_depth',
-        default=50,
+        default=121,
         type=int,
         help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
     parser.add_argument(
@@ -243,6 +243,9 @@ def parse_opts():
         help='ResNeXt cardinality')
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
+    parser.add_argument(
+        '--log_step', default=100, tyoe = int, help = 'Accuracy logging frequency'
+    )
 
 
     args = parser.parse_args()

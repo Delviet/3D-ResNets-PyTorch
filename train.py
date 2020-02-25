@@ -5,11 +5,11 @@ import os
 from tqdm import tqdm
 import sys
 from quadriplet_loss import batch_hard_quadriplet_loss
-from utils import AverageMeter, calculate_accuracy, calculate_accuracy_top_2
+from utils import AverageMeter, calculate_accuracy, calculate_accuracy_top_2, calculate_accuracy_top_5
 
 
 def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
-                epoch_logger, batch_logger, experiment=None):
+                epoch_logger, batch_logger, log_step=100, experiment=None):
     print('train at epoch {}'.format(epoch))
 
     model.train()
@@ -19,6 +19,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
     losses = AverageMeter()
     accuracies = AverageMeter()
     accuracies_2 = AverageMeter()
+    accuracies_5 = AverageMeter()
 
     end_time = time.time()
 
@@ -30,7 +31,6 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         inputs = Variable(inputs)
         targets = Variable(targets)
 
-
         if opt.use_quadriplet:
             embs, outputs = model(inputs)
             loss = criterion(outputs, targets)
@@ -40,12 +40,18 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
-        acc = calculate_accuracy(outputs, targets)
-        acc_2 = calculate_accuracy_top_2(outputs, targets)
+        if (i + 1) % log_step == 0:
+            acc = calculate_accuracy(outputs, targets)
+            acc_2 = calculate_accuracy_top_2(outputs, targets)
+            acc_5 = calculate_accuracy_top_5(outputs, targets)
+            accuracies.update(acc, inputs.size(0))
+            accuracies_2.update(acc_2, inputs.size(0))
+            accuracies_5.update(acc_5, inputs.size(0))
+            logg_vals_1 = accuracies.val
+            logg_vals_2 = accuracies_2.val
+            logg_vals_5 = accuracies_5.val
 
         losses.update(loss.data, inputs.size(0))
-        accuracies.update(acc, inputs.size(0))
-        accuracies_2.update(acc_2, inputs.size(0))
 
         optimizer.zero_grad()
         loss.backward()
@@ -59,29 +65,28 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             'batch': i + 1,
             'iter': (epoch - 1) * len(data_loader) + (i + 1),
             'loss': losses.val,
-            'acc': accuracies.val,
-            'acc_2': accuracies_2.val,
+            'acc': logg_vals_1,
+            'acc_2': logg_vals_2,
+            'acc_5': logg_vals_5,
             'lr': optimizer.param_groups[0]['lr']
         })
         if experiment:
             experiment.log_metric('TRAIN Loss batch', losses.val.cpu())
-            experiment.log_metric('TRAIN Acc batch', accuracies.val.cpu())
-            experiment.log_metric('TRAIN Acc 2 batch', accuracies_2.val.cpu())
 
-        print('Epoch: [{0}][{1}/{2}]\t'
-              'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-              'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-              'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-              'Acc {acc.val:.3f} ({acc.avg:.3f}) \t '
-              'Acc 2 {acc_2.val:.3f} ({acc_2.avg:.3f})'.format(
-                  epoch,
-                  i + 1,
-                  len(data_loader),
-                  batch_time=batch_time,
-                  data_time=data_time,
-                  loss=losses,
-                  acc=accuracies,
-                  acc_2=accuracies_2))
+        # print('Epoch: [{0}][{1}/{2}]\t'
+        #       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+        #       'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+        #       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+        #       'Acc {acc.val:.3f} ({acc.avg:.3f}) \t '
+        #       'Acc 2 {acc_2.val:.3f} ({acc_2.avg:.3f})'.format(
+        #           epoch,
+        #           i + 1,
+        #           len(data_loader),
+        #           batch_time=batch_time,
+        #           data_time=data_time,
+        #           loss=losses,
+        #           acc=accuracies,
+        #           acc_2=accuracies_2))
 
     epoch_logger.log({
         'epoch': epoch,
@@ -93,6 +98,7 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         experiment.log_metric('TRAIN Loss epoch', losses.avg.cpu())
         experiment.log_metric('TRAIN Acc epoch', accuracies.avg.cpu())
         experiment.log_metric('TRAIN Acc_2 epoch', accuracies_2.avg.cpu())
+        experiment.log_metric('TRAIN Acc_5 epoch', accuracies_5.avg.cpu())
         experiment.log_metric('TRAIN LR', optimizer.param_groups[0]['lr'])
 
     if epoch % opt.checkpoint == 0:

@@ -188,9 +188,8 @@ class DenseNet(nn.Module):
                     num_output_features=num_features // 2)
                 self.features.add_module('transition%d' % (i + 1), trans)
                 num_features = num_features // 2
-
         # Final batch norm
-        self.features.add_module('norm5', nn.BatchNorm2d(num_features))
+        self.features.add_module('norm5', nn.BatchNorm3d(num_features))
 
         for m in self.modules():
             if isinstance(m, nn.Conv3d):

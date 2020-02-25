@@ -190,7 +190,7 @@ if __name__ == '__main__':
     for i in range(opt.begin_epoch, opt.n_epochs + 1):
         if not opt.no_train:
             train_epoch(i, train_loader, model, criterion, optimizer, opt,
-                        train_logger, train_batch_logger, experiment=experiment)
+                        train_logger, train_batch_logger, log_step= opt.log_step,experiment=experiment)
         if not opt.no_val:
             validation_loss = val_epoch(i, val_loader, model, criterion, opt,
                                     val_logger, experiment=experiment)
