@@ -244,7 +244,7 @@ def parse_opts():
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
     parser.add_argument(
-        '--log_step', default=100, tyoe = int, help = 'Accuracy logging frequency'
+        '--log_step', default=100, type = int, help = 'Accuracy logging frequency'
     )
 
 
