@@ -4,7 +4,7 @@ import json
 from loguru import logger
 import sys
 import subprocess
-import  numpy as np
+import numpy as np
 from tqdm import tqdm
 from vidaug import augmentors as va
 import math
@@ -20,7 +20,6 @@ from PIL import Image
 DATASET_PATH = '../GTA_dataset'
 JPG_PATH = '../GTA_JPG_DATASET'
 logger.add(sys.stdout)
-
 
 
 def pil_loader(path):
@@ -50,7 +49,7 @@ def get_default_image_loader():
 def video_loader(video_dir_path, frame_indices, image_loader):
     video = []
     for i in frame_indices:
-        image_path = os.path.join(video_dir_path, 'image_{:05d}.jpg'.format(i))
+        image_path = os.path.join(video_dir_path, 'image_{:05d}.jpg'.format(i)).replace('\\', '/')
         if os.path.exists(image_path):
             video.append(image_loader(image_path))
         else:
@@ -65,31 +64,30 @@ def get_default_video_loader():
     return functools.partial(video_loader, image_loader=image_loader)
 
 
-
 def dataset_jpg(dataset_path, jpg_path):
     '''
     converts all files to jpg format
     '''
     if not os.path.exists(jpg_path):
         os.mkdir(jpg_path)
-    inner_files = glob(os.path.join(dataset_path, '*'))
+    inner_files = glob(os.path.join(dataset_path, '*').replace('\\', '/'))
     dataset_folders = [name for name in inner_files if os.path.isdir(name) and os.path.split(name)[
         -1].istitle()]  # filter out files and non Title names
     for class_folder in dataset_folders:
         curr_class = os.path.split(class_folder)[-1]
-        os.mkdir(os.path.join(jpg_path, curr_class))
-        print(os.path.join(jpg_path, curr_class), 'created')
-        scene_folders = glob(os.path.join(class_folder, '*'))
+        os.mkdir(os.path.join(jpg_path, curr_class).replace('\\', '/'))
+        print(os.path.join(jpg_path, curr_class).replace('\\', '/'), 'created')
+        scene_folders = glob(os.path.join(class_folder, '*').replace('\\', '/'))
         scene_folders = [scene_folder for scene_folder in scene_folders if '.DS' not in scene_folder]
         for scene_folder in scene_folders:
             curr_scene = os.path.split(scene_folder)[-1]
-            os.mkdir(os.path.join(jpg_path, curr_class, curr_scene))
-            print(os.path.join(jpg_path, curr_class, curr_scene), 'created')
-            scene_videos = glob(os.path.join(scene_folder, '*.mp4'))
+            os.mkdir(os.path.join(jpg_path, curr_class, curr_scene).replace('\\', '/'))
+            print(os.path.join(jpg_path, curr_class, curr_scene).replace('\\', '/'), 'created')
+            scene_videos = glob(os.path.join(scene_folder, '*.mp4').replace('\\', '/'))
             for video in scene_videos:
                 # create folder
                 video_name = os.path.split(video)[-1][:-4]
-                dest_path = os.path.join(jpg_path, curr_class, curr_scene, video_name)
+                dest_path = os.path.join(jpg_path, curr_class, curr_scene, video_name).replace('\\', '/')
                 os.mkdir(dest_path)
                 print(dest_path, 'created')
                 cmd = 'ffmpeg -i {} -vf scale=-1:360 {}/image_%05d.jpg'.format(video, dest_path)
@@ -116,7 +114,7 @@ def dataset_to_json(dataset_path, split_type=1):
     video_labels = {}
     scene_labels = {}
     scene_map = {}
-    inner_files = glob(os.path.join(dataset_path, '*'))
+    inner_files = glob(os.path.join(dataset_path, '*').replace('\\', '/'))
     dataset_folders = [name for name in inner_files if os.path.isdir(name) and os.path.split(name)[
         -1].istitle()]  # filter out files and non Title names
     classes = [os.path.split(folder)[-1] for folder in dataset_folders]
@@ -125,18 +123,18 @@ def dataset_to_json(dataset_path, split_type=1):
     for class_folder in dataset_folders:
         curr_class = os.path.split(class_folder)[-1]
         curr_class_id = class_map[curr_class]
-        scene_folders = glob(os.path.join(class_folder, '*'))
+        scene_folders = glob(os.path.join(class_folder, '*').replace('\\', '/'))
         scene_folders = [scene_folder for scene_folder in scene_folders if '.DS' not in scene_folder]
         for scene_folder in scene_folders:
             scene_labels[scene_id] = curr_class_id
-            scene_videos = glob(os.path.join(scene_folder, '*.mp4'))
+            scene_videos = glob(os.path.join(scene_folder, '*.mp4').replace('\\', '/'))
             scene_map[scene_id] = scene_folder
             for video in scene_videos:
                 video_labels[video.replace(dataset_path, '')] = (curr_class_id, scene_id)
             scene_id += 1
     X_train, X_test, y_train, y_test = train_test_split(
         list(scene_labels.keys()), list(scene_labels.values()), test_size=0.2, random_state=1)
-    scene_labels = { 'test':dict(zip(X_test, y_test))}
+    scene_labels = {'test': dict(zip(X_test, y_test))}
 
     if split_type == 2:
         X_train, X_val, y_train, y_val = train_test_split(
@@ -145,11 +143,8 @@ def dataset_to_json(dataset_path, split_type=1):
     scene_labels['train'] = dict(zip(X_train, y_train))
 
     data = {'video_labels': video_labels, 'scene_labels': scene_labels, 'scene_map': scene_map, 'class_map': class_map}
-    with open(os.path.join(dataset_path, 'gta_dataset.json'), 'w+') as file:
+    with open(os.path.join(dataset_path, 'gta_dataset.json').replace('\\', '/'), 'w+') as file:
         file.write(json.dumps(data))
-
-
-
 
 
 def make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video=1, sample_duration=16):
@@ -160,17 +155,19 @@ def make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video=1, sam
     :param subset: 'train'/'test'/'val' (if use val, divide dataset on train, test, val using dataset_to_json)
     :return: dataset dict
     '''
+    print(dataset_path, jpg_path, subset)
     if not os.path.exists(dataset_path) or not os.path.isdir(dataset_path):
         logger.exception(f'Dataset Folder {dataset_path} not found or is not a directory')
         return {}, {}, {}, {}
     if not os.path.exists(jpg_path):
         logger.warning(f'Dataset jpg folder {jpg_path} not found. Creating ...')
         dataset_jpg(dataset_path, jpg_path)
-    if not os.path.exists(os.path.join(dataset_path, 'gta_dataset.json')):
+    if not os.path.exists(os.path.join(dataset_path + '/gta_dataset.json').replace('\\', '/')):
+        some_path = os.path.join(dataset_path + "/gta_dataset.json").replace("\\", "/")
         logger.warning(
-            f'Dataset json description {os.path.join(dataset_path, "gta_dataset.json")} not found. Creating...')
+            f'Dataset json description {some_path} not found. Creating...')
         dataset_to_json(dataset_path, 2)
-    with open(os.path.join(dataset_path, 'gta_dataset.json')) as js:
+    with open(os.path.join(dataset_path + '/gta_dataset.json').replace("\\", "/")) as js:
         dataset_json = json.loads(js.read())
     dataset = []
     video_labels = dataset_json['video_labels']
@@ -178,7 +175,7 @@ def make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video=1, sam
     scene_map = dataset_json['scene_map']
     class_map = dataset_json['class_map']
     scene_labels_split = scene_labels.get(subset, {})
-    if len(scene_labels_split)==0:
+    if len(scene_labels_split) == 0:
         logger.warning(f'Empty {subset} split. Check your json file.')
         return {}, {}, {}, {}
 
@@ -186,19 +183,20 @@ def make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video=1, sam
     for video, (class_id, scene_id) in tqdm(video_labels.items(), total=len(video_labels.items())):
         sample = {}
         n_frames = 0
-        if str(scene_id) not in scene_labels_split: # not required split from: train, test,
+        if str(scene_id) not in scene_labels_split:  # not required split from: train, test,
             continue
-        path_to_video_frames = os.path.join(jpg_path, video[1:-4])
+        path_to_video_frames = os.path.join(jpg_path, video[1:-4]).replace('\\', '/')
         if not os.path.isdir(path_to_video_frames) or not os.path.exists(path_to_video_frames):
             logger.warning(f'Wrong path to sample frames: {path_to_video_frames}. Expected folder. Skipping ...')
             continue
-
-        frame_indices = glob(os.path.join(path_to_video_frames, '*.jpg'))
+        # if 'Vandalism/22' in path_to_video_frames:
+        #     print(path_to_video_frames)
+        #     lerjejer()
+        frame_indices = glob(os.path.join(path_to_video_frames, '*.jpg').replace('\\', '/'))
         n_frames = len(frame_indices)
 
         begin_t = 1
         end_t = n_frames
-
 
         sample = {
             'video': path_to_video_frames,
@@ -258,7 +256,9 @@ class GTA_crime(data.Dataset):
         print('n samples:', n_samples_for_each_video)
         self.sample_duration = sample_duration
         self.subset = subset
-        self.data, self.scene_labels, self.scene_map, self.class_map = make_dataset(dataset_path, jpg_path, subset, n_samples_for_each_video, sample_duration)
+        self.data, self.scene_labels, self.scene_map, self.class_map = make_dataset(dataset_path, jpg_path, subset,
+                                                                                    n_samples_for_each_video,
+                                                                                    sample_duration)
         self.spatial_transform = spatial_transform
         self.temporal_transform = temporal_transform
         self.target_transform = target_transform
@@ -291,7 +291,7 @@ class GTA_crime(data.Dataset):
         path = sample['video']
         # print(path)
         frame_indices = sample['frame_indices']
-        if len(frame_indices)==0:
+        if len(frame_indices) == 0:
             logger.error(f'empty frame {path}')
         if self.temporal_transform is not None:
             frame_indices = self.temporal_transform(frame_indices)
@@ -302,7 +302,7 @@ class GTA_crime(data.Dataset):
             self.spatial_transform.randomize_parameters()
             clip = [self.spatial_transform(img) for img in clip]
 
-        if len(clip)==0:
+        if len(clip) == 0:
             logger.warning(f'Empty clip list: {path}, {frame_indices}')
         clip = torch.stack(clip, 0).permute(1, 0, 2, 3)
 
@@ -314,4 +314,3 @@ class GTA_crime(data.Dataset):
 
     def __len__(self):
         return len(self.data)
-
