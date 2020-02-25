@@ -22,10 +22,12 @@ def conv3x3x3(in_planes, out_planes, stride=1):
         padding=1,
         bias=False)
 
+
 def conv3d_dw(in_planes, out_planes, stride=1):
     # 3D depthwise convolution
     return nn.Conv3d(
-            in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False, groups=in_planes)
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False, groups=in_planes)
+
 
 def downsample_basic_block(x, planes, stride):
     out = F.avg_pool3d(x, kernel_size=1, stride=stride)
@@ -110,6 +112,7 @@ class Bottleneck(nn.Module):
 
         return out
 
+
 class IR_bottleneck(nn.Module):
     '''
     Interaction reduced bottelneck block
@@ -150,6 +153,7 @@ class IR_bottleneck(nn.Module):
 
         return out
 
+
 class IP_bottleneck(nn.Module):
     expansion = 4
     '''
@@ -165,7 +169,7 @@ class IP_bottleneck(nn.Module):
         self.conv3 = conv3d_dw(planes, planes, stride=stride)
         self.bn3 = nn.BatchNorm3d(planes)
         self.conv4 = nn.Conv3d(planes, planes * 4, kernel_size=1, bias=False)
-        self.bn4= nn.BatchNorm3d(planes * 4)
+        self.bn4 = nn.BatchNorm3d(planes * 4)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
@@ -234,7 +238,7 @@ class ResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv3d):
-                m.weight = nn.init.kaiming_normal(m.weight, mode='fan_out')
+                m.weight = nn.init.kaiming_normal_(m.weight, mode='fan_out')
             elif isinstance(m, nn.BatchNorm3d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
@@ -265,7 +269,6 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        # print(x.shape)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -305,6 +308,14 @@ def get_fine_tuning_parameters(model, ft_begin_index):
     return parameters
 
 
+# def load_resnet_weights(curr_model, pretrain_path):
+#     model = resnet50(model_type='3d')
+#     ## add cuda handling
+#     model = nn.DataParallel(model, device_ids=None)
+#     pretrain = torch.load(pretrain_path)
+#     model.load_state_dict(pretrain['state_dict'])
+
+
 def resnet10(**kwargs):
     """Constructs a ResNet-18 model.
     """
@@ -324,16 +335,6 @@ def resnet34(**kwargs):
     """
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     return model
-
-def load_resnet_weights(curr_model, pretrain_path):
-    model = resnet50(model_type='3d')
-    ## add cuda handling
-    model = nn.DataParallel(model, device_ids=None)
-    pretrain = torch.load(pretrain_path)
-    model.load_state_dict(pretrain['state_dict'])
-
-
-
 
 
 def resnet50(**kwargs):
@@ -390,4 +391,3 @@ def resnet200(**kwargs):
     else:
         model = ResNet(Bottleneck, [3, 24, 36, 3], **kwargs)
     return model
-

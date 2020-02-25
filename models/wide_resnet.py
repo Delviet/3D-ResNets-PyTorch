@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import math
 from functools import partial
 
-__all__ = ['WideResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101']
+__all__ = ['WideResNet', 'wideresnet50']
 
 
 def conv3x3x3(in_planes, out_planes, stride=1):
@@ -179,8 +179,8 @@ def get_fine_tuning_parameters(model, ft_begin_index):
     return parameters
 
 
-def resnet50(**kwargs):
-    """Constructs a ResNet-50 model.
+def wideresnet50(**kwargs):
+    """Constructs a WideResNet-50 model.
     """
     model = WideResNet(WideBottleneck, [3, 4, 6, 3], **kwargs)
     return model
