@@ -66,7 +66,7 @@ def generate_model(opt):
         from models.wide_resnet import get_fine_tuning_parameters
 
         if opt.model_depth == 50:
-            model = wide_resnet.resnet50(
+            model = wide_resnet.wideresnet50(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 k=opt.wide_resnet_k,
@@ -78,21 +78,21 @@ def generate_model(opt):
         from models.resnext import get_fine_tuning_parameters
 
         if opt.model_depth == 50:
-            model = resnext.resnet50(
+            model = resnext.resnext50(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 cardinality=opt.resnext_cardinality,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
         elif opt.model_depth == 101:
-            model = resnext.resnet101(
+            model = resnext.resnext101(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 cardinality=opt.resnext_cardinality,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
         elif opt.model_depth == 152:
-            model = resnext.resnet152(
+            model = resnext.resnext152(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 cardinality=opt.resnext_cardinality,
@@ -104,37 +104,37 @@ def generate_model(opt):
         from models.pre_act_resnet import get_fine_tuning_parameters
 
         if opt.model_depth == 18:
-            model = pre_act_resnet.resnet18(
+            model = pre_act_resnet.preactresnet18(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
         elif opt.model_depth == 34:
-            model = pre_act_resnet.resnet34(
+            model = pre_act_resnet.preactresnet34(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
         elif opt.model_depth == 50:
-            model = pre_act_resnet.resnet50(
+            model = pre_act_resnet.preactresnet50(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
         elif opt.model_depth == 101:
-            model = pre_act_resnet.resnet101(
+            model = pre_act_resnet.preactresnet101(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
         elif opt.model_depth == 152:
-            model = pre_act_resnet.resnet152(
+            model = pre_act_resnet.preactresnet152(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
                 sample_duration=opt.sample_duration)
         elif opt.model_depth == 200:
-            model = pre_act_resnet.resnet200(
+            model = pre_act_resnet.preactresnet200(
                 num_classes=opt.n_classes,
                 shortcut_type=opt.resnet_shortcut,
                 sample_size=opt.sample_size,
@@ -257,6 +257,3 @@ class EmbeddingModel(nn.Module):
         y = self.classifier(embedding)
 
         return embedding, y
-
-
-

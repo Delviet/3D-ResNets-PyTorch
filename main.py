@@ -6,7 +6,6 @@ import numpy as np
 import torch
 from torch import nn
 from torch import optim
-from torchsummary import summary
 from torch.optim import lr_scheduler
 
 from opts import parse_opts
@@ -17,7 +16,6 @@ from spatial_transforms import (
     MultiScaleRandomCrop, RandomHorizontalFlip, ToTensor)
 from temporal_transforms import LoopPadding, TemporalRandomCrop
 from target_transforms import ClassLabel, VideoID
-from target_transforms import Compose as TargetCompose
 from dataset import get_training_set, get_validation_set, get_test_set
 from utils import Logger
 from train import train_epoch
@@ -42,9 +40,10 @@ if __name__ == '__main__':
 
     model, parameters = generate_model(opt)
 
-    experiment = Experiment(api_key='Cbyqfs9Z8auN5ivKsbv2Z6Ogi', project_name='GTA-Crime')
+    experiment = Experiment(api_key='0xxOiAiD6IQtDMYDv3Ft7mdmF', project_name='gta-b', workspace="arantir")
     params = {'lr': opt.learning_rate,
               'dampening': opt.dampening,
+              'manual_seed': opt.manual_seed,
               'optimizer': opt.optimizer,
               'lr_patience': opt.lr_patience,
               'batch_size': opt.batch_size,
@@ -63,7 +62,7 @@ if __name__ == '__main__':
     experiment.log_parameters(params)
     experiment.add_tag('augmentation')
     experiment.add_tag('multilayer fc module')
-    experiment.add_tag('densenext')
+    experiment.add_tag('resnet-10')
     experiment.add_tag(opt.model_type)
 
 
@@ -85,6 +84,7 @@ if __name__ == '__main__':
     opt.mean = get_mean(opt.norm_value, dataset=opt.mean_dataset)
     opt.std = get_std(opt.norm_value, opt.dataset)
     print(opt)
+    os.makedirs(opt.result_path, exist_ok = True)
     with open(os.path.join(opt.result_path, 'opts.json'), 'w') as opt_file:
         json.dump(vars(opt), opt_file)
 
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     model, parameters = generate_model(opt)
     print(model)
-    summary(model, input_size=(3,64, 112, 112))
+    # summary(model, input_size=(3, 64, 112, 112))
     criterion = nn.CrossEntropyLoss()
     if not opt.no_cuda:
         criterion = criterion.cuda(device=opt.cuda_id)
@@ -168,7 +168,7 @@ if __name__ == '__main__':
             opt, spatial_transform, temporal_transform, target_transform)
         val_loader = torch.utils.data.DataLoader(
             validation_data,
-            batch_size=32,
+            batch_size=opt.batch_size,
             shuffle=True,
             num_workers=opt.n_threads,
             pin_memory=True)

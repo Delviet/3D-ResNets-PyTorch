@@ -20,7 +20,7 @@ def parse_opts():
         help='Annotation file path')
     parser.add_argument(
         '--result_path',
-        default='resnext-101_less_params',
+        default='resnet_trial',
         type=str,
         help='Result directory path')
     parser.add_argument(
@@ -116,7 +116,7 @@ def parse_opts():
         help='Patience of LR scheduler. See documentation of ReduceLROnPlateau.'
     )
     parser.add_argument(
-        '--batch_size', default=80, type=int, help='Batch Size')
+        '--batch_size', default=4, type=int, help='Batch Size')
     parser.add_argument(
         '--n_epochs',
         default=200,
@@ -142,11 +142,11 @@ def parse_opts():
         help='Number of validation samples for each activity')
     parser.add_argument(
         '--resume_path',
-        default='resnext-101_less_params/save_4.pth',
+        default='',
         type=str,
         help='Save data (.pth) of previous training')
     parser.add_argument(
-        '--pretrain_path', default='pretrained_models/resnext-101-64f-kinetics-hmdb51_split1.pth', type=str, help='Pretrained model (.pth)')
+        '--pretrain_path', default='', type=str, help='Pretrained model (.pth)')
     parser.add_argument(
         '--ft_begin_index',
         default=5,
@@ -186,11 +186,11 @@ def parse_opts():
         help='If true, output for each clip is not normalized using softmax.')
     parser.set_defaults(no_softmax_in_test=False)
     parser.add_argument(
-        '--no_cuda', action='store_false', help='If true, cuda is not used.', default=False)
+        '--no_cuda', action='store_false', help='If true, cuda is not used.', default=True)
     parser.add_argument(
         '--cuda_id', default=0, help='0 or 1 or other number for cuda device'
     )
-    parser.set_defaults(no_cuda=False)
+    parser.set_defaults(no_cuda=True)
     parser.add_argument(
         '--n_threads',
         default=4,
@@ -214,9 +214,9 @@ def parse_opts():
         'If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
     parser.add_argument(
         '--model',
-        default='resnext',
+        default='wideresnet',
         type=str,
-        help='(resnet | preresnet | wideresnet | resnext | densenet | ')
+        help='(resnet | preresnet | wideresnet | resnext | densenet')
     parser.add_argument(
         '--model_type',
         default='3d',
@@ -226,7 +226,7 @@ def parse_opts():
     )
     parser.add_argument(
         '--model_depth',
-        default=101,
+        default=50,
         type=int,
         help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
     parser.add_argument(
