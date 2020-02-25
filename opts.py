@@ -10,17 +10,17 @@ def parse_opts():
         help='Root directory path of data')
     parser.add_argument(
         '--video_path',
-        default='../gdrive/My Drive/GTA_dataset',
+        default='gdrive/My Drive/GTA_dataset',
         type=str,
         help='Directory path of Videos')
     parser.add_argument(
         '--annotation_path',
-        default='../gdrive/My Drive/GTA_JPG_DATASET',
+        default='gdrive/My Drive/GTA_JPG_DATASET',
         type=str,
         help='Annotation file path')
     parser.add_argument(
         '--result_path',
-        default='../gdrive/My Drive/resnet_trial',
+        default='gdrive/My Drive/resnet_trial',
         type=str,
         help='Result directory path')
     parser.add_argument(
