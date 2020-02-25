@@ -186,11 +186,10 @@ def parse_opts():
         help='If true, output for each clip is not normalized using softmax.')
     parser.set_defaults(no_softmax_in_test=False)
     parser.add_argument(
-        '--no_cuda', action='store_false', help='If true, cuda is not used.', default=True)
+        '--no_cuda', action='store_false', help='If true, cuda is not used.', default=False)
     parser.add_argument(
         '--cuda_id', default=0, help='0 or 1 or other number for cuda device'
     )
-    parser.set_defaults(no_cuda=True)
     parser.add_argument(
         '--n_threads',
         default=4,
