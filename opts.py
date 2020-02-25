@@ -213,7 +213,7 @@ def parse_opts():
         'If 1, range of inputs is [0-255]. If 255, range of inputs is [0-1].')
     parser.add_argument(
         '--model',
-        default='densenet',
+        default='resnet',
         type=str,
         help='(resnet | preresnet | wideresnet | resnext | densenet')
     parser.add_argument(
@@ -225,7 +225,7 @@ def parse_opts():
     )
     parser.add_argument(
         '--model_depth',
-        default=121,
+        default=10,
         type=int,
         help='Depth of resnet (10 | 18 | 34 | 50 | 101)')
     parser.add_argument(
