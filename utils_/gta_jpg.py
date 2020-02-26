@@ -34,6 +34,6 @@ def dataset_jpg(dataset_path, jpg_path):
                 cmd = ['ffmpeg', '-i', str(video), '-vf', 'scale=-1:360', str(video) + '/image_%05d.jpg']
                 # cmd = 'ffmpeg -i "{}" -vf scale=-1:360 "{}/image_%05d.jpg"'.format(video, dest_path)
                 print(cmd)
-                subprocess.call(cmd, shell=True)
+                subprocess.call(cmd)
                 print(video, 'done!')
                 print('\n')
