@@ -31,7 +31,7 @@ def dataset_jpg(dataset_path, jpg_path):
                 dest_path = os.path.join(jpg_path, curr_class, curr_scene, video_name)
                 os.mkdir(dest_path)
                 print(dest_path, 'created')
-                cmd = ['ffmpeg', '-i', str(video), '-vf', 'scale=-1:360', str(video) + '/image_%05d.jpg']
+                cmd = ['ffmpeg', '-i', str(video), '-vf', 'scale=-1:360', str(dest_path) + '/image_%05d.jpg']
                 # cmd = 'ffmpeg -i "{}" -vf scale=-1:360 "{}/image_%05d.jpg"'.format(video, dest_path)
                 print(cmd)
                 subprocess.call(cmd)
