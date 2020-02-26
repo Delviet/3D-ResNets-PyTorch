@@ -47,9 +47,6 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             accuracies.update(acc, inputs.size(0))
             accuracies_2.update(acc_2, inputs.size(0))
             accuracies_5.update(acc_5, inputs.size(0))
-            logg_vals_1 = accuracies.val
-            logg_vals_2 = accuracies_2.val
-            logg_vals_5 = accuracies_5.val
 
         losses.update(loss.data, inputs.size(0))
 
@@ -60,16 +57,16 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         batch_time.update(time.time() - end_time)
         end_time = time.time()
 
-        batch_logger.log({
-            'epoch': epoch,
-            'batch': i + 1,
-            'iter': (epoch - 1) * len(data_loader) + (i + 1),
-            'loss': losses.val,
-            'acc': logg_vals_1,
-            'acc_2': logg_vals_2,
-            'acc_5': logg_vals_5,
-            'lr': optimizer.param_groups[0]['lr']
-        })
+        # batch_logger.log({
+        #     'epoch': epoch,
+        #     'batch': i + 1,
+        #     'iter': (epoch - 1) * len(data_loader) + (i + 1),
+        #     'loss': losses.val,
+        #     # 'acc': logg_vals_1,
+        #     # 'acc_2': logg_vals_2,
+        #     # 'acc_5': logg_vals_5,
+        #     'lr': optimizer.param_groups[0]['lr']
+        # })
         if experiment:
             experiment.log_metric('TRAIN Loss batch', losses.val.cpu())
 
@@ -88,12 +85,12 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         #           acc=accuracies,
         #           acc_2=accuracies_2))
 
-    epoch_logger.log({
-        'epoch': epoch,
-        'loss': losses.avg,
-        'acc': accuracies.avg,
-        'lr': optimizer.param_groups[0]['lr']
-    })
+    # epoch_logger.log({
+    #     'epoch': epoch,
+    #     'loss': losses.avg,
+    #     'acc': accuracies.avg,
+    #     'lr': optimizer.param_groups[0]['lr']
+    # })
     if experiment:
         experiment.log_metric('TRAIN Loss epoch', losses.avg.cpu())
         experiment.log_metric('TRAIN Acc epoch', accuracies.avg.cpu())
