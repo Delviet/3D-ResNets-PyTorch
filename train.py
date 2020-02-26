@@ -68,6 +68,9 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         #     'lr': optimizer.param_groups[0]['lr']
         # })
         if experiment:
+            experiment.log_metric('TRAIN Acc epoch', accuracies.avg.cpu())
+            experiment.log_metric('TRAIN Acc_2 epoch', accuracies_2.avg.cpu())
+            experiment.log_metric('TRAIN Acc_5 epoch', accuracies_5.avg.cpu())
             experiment.log_metric('TRAIN Loss batch', losses.val.cpu())
 
         # print('Epoch: [{0}][{1}/{2}]\t'
