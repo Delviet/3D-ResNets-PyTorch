@@ -40,19 +40,20 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
-        if (i + 1) % log_step == 0:
-            acc = calculate_accuracy(outputs, targets)
-            acc_2 = calculate_accuracy_top_2(outputs, targets)
-            acc_5 = calculate_accuracy_top_5(outputs, targets)
-            accuracies.update(acc, inputs.size(0))
-            accuracies_2.update(acc_2, inputs.size(0))
-            accuracies_5.update(acc_5, inputs.size(0))
+        acc = calculate_accuracy(outputs, targets)
+        acc_2 = calculate_accuracy_top_2(outputs, targets)
+        acc_5 = calculate_accuracy_top_5(outputs, targets)
+        accuracies.update(acc, inputs.size(0))
+        accuracies_2.update(acc_2, inputs.size(0))
+        accuracies_5.update(acc_5, inputs.size(0))
 
-            experiment.log_metric('TRAIN Acc epoch', accuracies.val.cpu())
-            experiment.log_metric('TRAIN Acc_2 epoch', accuracies_2.val.cpu())
-            experiment.log_metric('TRAIN Acc_5 epoch', accuracies_5.val.cpu())
+        experiment.log_metric('TRAIN Acc epoch', accuracies.val.cpu())
+        experiment.log_metric('TRAIN Acc_2 epoch', accuracies_2.val.cpu())
+        experiment.log_metric('TRAIN Acc_5 epoch', accuracies_5.val.cpu())
 
         losses.update(loss.data, inputs.size(0))
+        experiment.log_metric('TRAIN Loss batch', losses.val.cpu())
+
 
         optimizer.zero_grad()
         loss.backward()
@@ -71,8 +72,6 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         #     # 'acc_5': logg_vals_5,
         #     'lr': optimizer.param_groups[0]['lr']
         # })
-        if experiment:
-            experiment.log_metric('TRAIN Loss batch', losses.val.cpu())
 
         # print('Epoch: [{0}][{1}/{2}]\t'
         #       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
