@@ -26,12 +26,12 @@ import subprocess
 import torch
 if __name__ == '__main__':
     opt = parse_opts()
-    print('CUDA', opt.cuda_id)
-    print( torch.cuda.device_count() )
+    # print('CUDA', opt.cuda_id)
+    # print( torch.cuda.device_count() )
     # os.environ['CUDA_VISIBLE_DEVICES'] = f'{opt.cuda_id}'
     # os.environ['CUDA_VISIBLE_DEVICE'] = f'{opt.cuda_id}'
-    print(torch.cuda.is_available())
-    print(torch.cuda.current_device())
+    # print(torch.cuda.is_available())
+    # print(torch.cuda.current_device())
 
     # torch.device = torch.cud
     # rc = subprocess.check_output(["echo $CUDA_VISIBLE_DEVICE"])
