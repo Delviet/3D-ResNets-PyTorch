@@ -10,17 +10,17 @@ def parse_opts():
         help='Root directory path of data')
     parser.add_argument(
         '--video_path',
-        default='gdrive/My Drive/GTA_dataset',
+        default='../GTA_dataset',
         type=str,
         help='Directory path of Videos')
     parser.add_argument(
         '--annotation_path',
-        default='gdrive/My Drive/GTA_JPG_DATASET',
+        default='../GTA_JPG_DATASET',
         type=str,
         help='Annotation file path')
     parser.add_argument(
         '--result_path',
-        default='gdrive/My Drive/resnet_trial',
+        default='../resnet_trial',
         type=str,
         help='Result directory path')
     parser.add_argument(
@@ -30,10 +30,10 @@ def parse_opts():
         help='Used dataset (activitynet | kinetics | ucf101 | hmdb51| gta)')
     parser.add_argument(
         '--n_classes',
-        default=51,
+        default=8,
         type=int,
         help=
-        'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51, GTA: 7)'
+        'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51, GTA: 8)'
     )
     parser.add_argument(
         '--n_finetune_classes',
@@ -186,7 +186,7 @@ def parse_opts():
         help='If true, output for each clip is not normalized using softmax.')
     parser.set_defaults(no_softmax_in_test=False)
     parser.add_argument(
-        '--no_cuda', action='store_false', help='If true, cuda is not used.', default=True)
+        '--no_cuda', action='store_false', help='If true, cuda is not used.', default=False)
     parser.add_argument(
         '--cuda_id', default=0, help='0 or 1 or other number for cuda device'
     )
@@ -243,7 +243,7 @@ def parse_opts():
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
     parser.add_argument(
-        '--log_step', default=100, type = int, help = 'Accuracy logging frequency'
+        '--log_step', default=10, type = int, help = 'Accuracy logging frequency'
     )
 
 
