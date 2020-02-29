@@ -69,7 +69,7 @@ def val_epoch(epoch, data_loader, model, criterion, opt, logger, experiment=None
             experiment.log_metric('VAL Loss epoch', losses.avg.cpu())
             experiment.log_metric('VAL Acc epoch', accuracies.avg.cpu())
             experiment.log_metric('VAL Acc_2 epoch', accuracies_2.avg.cpu())
-            experiment.log_metric('TRAIN Acc_5 epoch', accuracies_5.avg.cpu())
+            experiment.log_metric('VAL Acc_5 epoch', accuracies_5.avg.cpu())
 
 
     return losses.avg

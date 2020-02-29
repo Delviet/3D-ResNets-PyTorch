@@ -99,7 +99,6 @@ def train_epoch(epoch, data_loader, model, criterion, optimizer, opt,
         experiment.log_metric('TRAIN Acc epoch', accuracies.avg.cpu())
         experiment.log_metric('TRAIN Acc_2 epoch', accuracies_2.avg.cpu())
         experiment.log_metric('TRAIN Acc_5 epoch', accuracies_5.avg.cpu())
-        experiment.log_metric('TRAIN LR', optimizer.param_groups[0]['lr'])
 
     if epoch % opt.checkpoint == 0:
         save_file_path = os.path.join(opt.result_path,
